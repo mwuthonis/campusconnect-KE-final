@@ -3,3 +3,5 @@ djangorestframework
 django-cors-headers
 djangorestframework-simplejwt
 django-environ
+django-filter
+django-redis
