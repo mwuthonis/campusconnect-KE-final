@@ -1,19 +1,83 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Calendar, Mail, Lock, ArrowRight } from "lucide-react";
+import { Calendar, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const LOGIN_ENDPOINT = `${API_BASE_URL}/api/token/`; // JWT endpoint
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic
-    console.log("Login attempt:", { email, password });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(LOGIN_ENDPOINT, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          username: email, // Django JWT expects 'username' field
+          password: password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+          data.message ||
+          'Invalid credentials. Please check your email and password.'
+        );
+      }
+
+      // Store JWT tokens in localStorage
+      if (data.access) {
+        localStorage.setItem('access_token', data.access);
+      }
+      if (data.refresh) {
+        localStorage.setItem('refresh_token', data.refresh);
+      }
+
+      // Store user email
+      localStorage.setItem('user_email', email);
+
+      // Save the token or handle successful login
+      toast({
+        title: "Login successful",
+        description: "Welcome back to CampusConnect KE!.",
+      });
+
+      navigate('/events'); // Redirect to dashboard or home page
+
+    } catch (err) {
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : 'An unexpected error occurred. Please try again.';
+      
+      setError(errorMessage);
+      
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -35,19 +99,30 @@ const Login = () => {
         </div>
 
         <Card className="p-8 shadow-smooth">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-destructive font-medium">
+                {error}
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Username or Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="you@university.edu"
+                  type="text"
+                  placeholder="Enter your username or email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
+                  autoComplete="username"
                 />
               </div>
             </div>
@@ -72,13 +147,29 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
                   required
+                  disabled={isLoading}
+                  autoComplete="current-password"
                 />
               </div>
             </div>
 
-            <Button type="submit" className="w-full gradient-primary gap-2" size="lg">
-              Sign In
-              <ArrowRight className="h-4 w-4" />
+            <Button 
+              type="submit" 
+              className="w-full gradient-primary gap-2" 
+              size="lg"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  Signing In...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </Button>
           </form>
 

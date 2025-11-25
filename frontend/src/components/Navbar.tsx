@@ -1,11 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation , useNavigate} from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Calendar, User } from "lucide-react";
+import { Menu, X, Calendar, User , LogOut} from "lucide-react";
 import { useState } from "react";
+import { auth } from "@/pages/auth";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthenticated = auth.isAuthenticated();
+  const userEmail = auth.getUserEmail();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -15,6 +19,10 @@ const Navbar = () => {
     { path: "/about", label: "About" },
   ];
 
+  const handleLogout = () => {
+    auth.logout();
+    navigate('/login');
+  };
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4">
@@ -50,7 +58,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* <div className="hidden md:flex items-center gap-3">
             <Link to="/login">
               <Button variant="ghost" className="gap-2">
                 <User className="h-4 w-4" />
@@ -62,6 +70,37 @@ const Navbar = () => {
                 Get Started
               </Button>
             </Link>
+          </div> */}
+          <div className="hidden md:flex items-center gap-3">
+            {isAuthenticated ? (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {userEmail}
+                </span>
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" className="gap-2">
+                    <User className="h-4 w-4" />
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button className="gradient-primary gap-2">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -91,7 +130,7 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border">
+              {/* <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border">
                 <Link to="/login" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" className="w-full gap-2">
                     <User className="h-4 w-4" />
@@ -102,7 +141,40 @@ const Navbar = () => {
                   <Button className="w-full gradient-primary">
                     Get Started
                   </Button>
-                </Link>
+                </Link> */}
+              <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border">
+                {isAuthenticated ? (
+                  <>
+                    <span className="text-sm text-muted-foreground mb-2">
+                      {userEmail}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="outline" className="w-full gap-2">
+                        <User className="h-4 w-4" />
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/register" onClick={() => setIsMenuOpen(false)}>
+                      <Button className="w-full gradient-primary">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

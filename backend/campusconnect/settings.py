@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     "django_filters",
 
     # Third-party apps
-    "rest_framework",         # Django REST Framework
+    "rest_framework",  
+    "rest_framework_simplejwt",      # Django REST Framework
     "corsheaders",            # CORS headers
 
     # Your project apps
@@ -90,7 +91,34 @@ REST_FRAMEWORK = {
 
 # CORS settings (allow frontend dev server)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:8080",  # Your React dev server
+    "http://127.0.0.1:8080",
+    "http://localhost:5173",  # Vite default port (if you're using Vite)
+
+]
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # Password validation
