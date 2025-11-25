@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,17 +7,72 @@ import { Card } from "@/components/ui/card";
 import { Calendar, Mail, Lock, User, ArrowRight } from "lucide-react";
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle registration logic
-    console.log("Registration attempt:", formData);
+  const handleSubmit = async (e: React.FormEvent) => {
+   e.preventDefault();
+    setErrors({});
+    setSuccessMessage("");
+
+    // Client-side validation
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: "Passwords do not match" });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:8000/api/register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage("Registration successful! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        // Handle backend errors
+        const backendErrors: Record<string, string> = {};
+        if (data.error) {
+          backendErrors.general = data.error;
+        }
+        if (data.username) {
+          backendErrors.name = Array.isArray(data.username) ? data.username[0] : data.username;
+        }
+        if (data.email) {
+          backendErrors.email = Array.isArray(data.email) ? data.email[0] : data.email;
+        }
+        if (data.password) {
+          backendErrors.password = Array.isArray(data.password) ? data.password[0] : data.password;
+        }
+        setErrors(backendErrors);
+      }
+    } catch (error) {
+      setErrors({ general: "Network error. Please try again later." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +102,18 @@ const Register = () => {
 
         <Card className="p-8 shadow-smooth">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {errors.general && (
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                <p className="text-sm text-destructive">{errors.general}</p>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-800">{successMessage}</p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">
@@ -61,6 +128,9 @@ const Register = () => {
                   required
                 />
               </div>
+               {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -77,6 +147,9 @@ const Register = () => {
                   required
                 />
               </div>
+               {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -93,6 +166,9 @@ const Register = () => {
                   required
                 />
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -109,11 +185,14 @@ const Register = () => {
                   required
                 />
               </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+              )}
             </div>
 
-            <Button type="submit" className="w-full gradient-primary gap-2" size="lg">
-              Create Account
-              <ArrowRight className="h-4 w-4" />
+            <Button type="submit" className="w-full gradient-primary gap-2" size="lg" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account"}             
+               <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
 
