@@ -6,12 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Calendar, Mail, Lock, User, ArrowRight } from "lucide-react";
 
-const Register = () => {
+interface RegisterProps {
+  role?: 'student' | 'organizer';
+}
+
+const Register = ({ role = 'student' }: RegisterProps) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
+    password: "", 
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
@@ -41,6 +45,7 @@ const Register = () => {
           username: formData.name,
           email: formData.email,
           password: formData.password,
+          role: role, 
         }),
       });
 
@@ -82,6 +87,8 @@ const Register = () => {
     });
   };
 
+  const isOrganizer = role === 'organizer';
+
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
@@ -94,9 +101,13 @@ const Register = () => {
               CampusConnect KE
             </span>
           </Link>
-          <h1 className="text-3xl font-heading font-bold mb-2">Create Account</h1>
+          <h1 className="text-3xl font-heading font-bold mb-2"
+          >{isOrganizer ? 'Create Organizer Account' : 'Create Account'}
+          </h1>
           <p className="text-muted-foreground">
-            Join thousands of students discovering events
+            {isOrganizer 
+              ? 'Start creating and managing events' 
+              : 'Join thousands of students discovering events'}
           </p>
         </div>
 
@@ -208,10 +219,21 @@ const Register = () => {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Are you an event organizer?{" "}
-            <Link to="/organizer/register" className="text-secondary font-medium hover:underline">
-              Register as organizer
-            </Link>
+            {isOrganizer ? (
+              <>
+                Want to register as a student?{" "}
+                <Link to="/register" className="text-secondary font-medium hover:underline">
+                  Student registration
+                </Link>
+              </>
+            ) : (
+              <>
+                Are you an event organizer?{" "}
+                <Link to="/organizer/register" className="text-secondary font-medium hover:underline">
+                  Register as organizer
+                </Link>
+              </>
+            )}
           </p>
         </div>
       </div>
